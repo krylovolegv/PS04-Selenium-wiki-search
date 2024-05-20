@@ -1,11 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.firefox import GeckoDriverManager
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+import random
 
 # Установка geckodriver
 service = FirefoxService(executable_path=GeckoDriverManager().install())
@@ -14,31 +11,25 @@ service = FirefoxService(executable_path=GeckoDriverManager().install())
 browser = webdriver.Firefox(service=service)
 
 # Открываем сайт Википедии
-browser.get("https://ru.wikipedia.org/wiki/%D0%97%D0%B0%D0%B3%D0%BB%D0%B0%D0%B2%D0%BD%D0%B0%D1%8F_%D1%81%D1%82%D1%80%D0%B0%D0%BD%D0%B8%D1%86%D0%B0")
+browser.get(
+    "https://ru.wikipedia.org/wiki/%D0%A1%D0%BE%D0%BB%D0%BD%D0%B5%D1%87%D0%BD%D0%B0%D1%8F_%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D0%B0")
 
-# Проверяем по заголовку, тот ли сайт открылся
-assert "Википедия" in browser.title
+# Ищем все элементы div с классом "hatnote navigation-not-searchable"
+hatnotes = []
+for element in browser.find_elements(By.TAG_NAME, "div"):
+    # Чтобы искать атрибут класса
+    cl = element.get_attribute("class")
+    if cl == "hatnote navigation-not-searchable":
+        hatnotes.append(element)
 
-# Находим окно поиска
-search_box = browser.find_element(By.ID, "searchInput")
+if hatnotes:
+    # Выбираем случайный элемент из найденных
+    hatnote = random.choice(hatnotes)
 
-# Вводим текст "Солнечная система"
-search_box.send_keys("Солнечная система")
+    # Для получения ссылки находим тег "a" внутри тега "div"
+    link = hatnote.find_element(By.TAG_NAME, "a").get_attribute("href")
 
-# Отправляем текст
-search_box.send_keys(Keys.RETURN)
-
-# Время ожидания 20 секунд
-wait = WebDriverWait(browser, 300)
-
-try:
-    # Ожидаем, пока элемент станет видимым
-    a = wait.until(EC.visibility_of_element_located((By.LINK_TEXT, "Солнечная система")))
-    print("Элемент найден")
-    # Добавляем клик на элемент
-    a.click()
-except TimeoutException:
-    print("Элемент не найден в течение указанного времени ожидания")
-
+    # Переходим по ссылке
+    browser.get(link)
 
 
